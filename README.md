@@ -1,6 +1,7 @@
 # illogical-Git-Osint
 Git Osint to get the email addresses of the users under organization / single user
 ![1](https://github.com/user-attachments/assets/218e81b2-5de7-4754-a1ab-f59bff5c6359)
+inspired by Gitrob
 
 
 
