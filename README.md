@@ -1,11 +1,15 @@
-# illogical-Git-Osint
+# illogical-Git-Osint V1.1 
 Git Osint to get the email addresses of the users under organization / single user
+
+**Now supports Detailed Logs to find out the repos where the commits are made. useful for blueteamers**
 ![1](https://github.com/user-attachments/assets/218e81b2-5de7-4754-a1ab-f59bff5c6359)
 inspired by Gitrob
 
 
 
 This script retrieves email addresses from GitHub repositories for either a specific user or an entire organization. The program processes each user's repositories and collects commit emails, displaying a table of all unique emails found. It handles rate limits (HTTP status codes 403 and 429) using exponential backoff, and retries up to 3 times with increasing time delays.
+
+
 
 
 ## Features
