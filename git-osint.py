@@ -30,7 +30,7 @@ def display_logo():
    I   L       L       O   O G  GG I   C     AAAAA  L       -  O   O  I     T
    I   L       L       O   O G   G I   C     A   A  L       -  O   O  I     T
   III  LLLLL   LLLLL    OOO  GGG  III  CCCC  A   A  LLLLL   -   OOO  III    T
-              - version 1.0 -
+              
 {TextColor.END}
 {TextColor.YELLOW}
   GGG  III  TTTTT    OOO   SSSS  III  N   N TTTTT
@@ -38,9 +38,9 @@ def display_logo():
  G  GG    I     T   O   O  SSS     I   N N N   T
  G   G    I     T   O   O     S    I   N  NN   T
   GGG   III    T    OOO   SSSS   III  N   N   T
-              - version 1.0 -
+              - version 1.1 -
 {TextColor.END}
-              {TextColor.BOLD}- version 1.0 -{TextColor.END}
+              {TextColor.BOLD}- version 1.1 -{TextColor.END}
 
 {TextColor.RED}
 -------------------------------------------------------------
