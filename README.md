@@ -1,5 +1,6 @@
 # illogical-Git-Osint V1.1 
 Git Osint to get the email addresses of the users under organization / single user
+![image](https://github.com/user-attachments/assets/a13c867a-64d0-4d2e-8021-aae7b377991f)
 
 **Now supports Detailed Logs to find out the repos where the commits are made. useful for blueteamers**
 ![1](https://github.com/user-attachments/assets/218e81b2-5de7-4754-a1ab-f59bff5c6359)
