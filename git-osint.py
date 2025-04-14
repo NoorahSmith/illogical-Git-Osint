@@ -51,19 +51,14 @@ Use at your own discretion.
     print(logo)
     print(f"{TextColor.BOLD}Created by:{TextColor.END} {TextColor.GREEN}Smith{TextColor.END}\n")
 
-def get_user_input() -> tuple[Optional[str], Optional[str], str]:
-    """Get and validate user input for organization or user mode, and logging choice"""
+def get_user_input() -> tuple[Optional[str], Optional[str]]:
+    """Get and validate user input for organization or user mode"""
     while True:
         choice = input("Process (O)rganization or (U)ser? [O/U]: ").strip().upper()
         if choice in ('O', 'U'):
             target = input(f"Enter {'organization' if choice == 'O' else 'GitHub username'}: ").strip()
             logger.info(f"{'Organization' if choice == 'O' else 'User'} selected: {target}")
-            logging_choice = input("Choose logging level: Simple (S) or Detailed (D)? [S/D]: ").strip().upper()
-            if logging_choice not in ('S', 'D'):
-                logger.error("Invalid choice! Please enter S or D.")
-                continue
-            logger.setLevel(logging.DEBUG if logging_choice == 'D' else logging.INFO)
-            return (target, None, logging_choice) if choice == 'O' else (None, target, logging_choice)
+            return (target, None) if choice == 'O' else (None, target)
         logger.error("Invalid choice! Please enter O or U")
 
 def handle_rate_limits(response: requests.Response) -> int:
@@ -106,26 +101,22 @@ def get_user_repos(username: str) -> List[Dict]:
     response = make_github_request(f"https://api.github.com/users/{username}/repos")
     return [repo for repo in response.json() if not repo['fork']] if response else []
 
-def extract_commits_from_repo(owner: str, repo: str) -> List[Dict]:
-    """Extract commit details from a repository"""
-    logger.debug(f"Extracting commits from {owner}/{repo}")
+def extract_emails_from_repo(owner: str, repo: str) -> Set[str]:
+    """Extract unique emails from repository commits"""
+    logger.debug(f"Extracting emails from {owner}/{repo}")
     response = make_github_request(f"https://api.github.com/repos/{owner}/{repo}/commits")
     if not response:
-        return []
+        return set()
 
-    commits = []
+    emails = set()
     for commit in response.json():
         try:
-            commit_details = {
-                'author': commit['commit']['author']['name'],
-                'email': commit['commit']['author']['email'],
-                'message': commit['commit']['message'],
-            }
-            if not any(noreply in commit_details['email'] for noreply in ['noreply', 'users.noreply']):
-                commits.append(commit_details)
+            email = commit['commit']['author']['email'].lower()
+            if not any(noreply in email for noreply in ['noreply', 'users.noreply']):
+                emails.add(email)
         except (KeyError, TypeError):
             continue
-    return commits
+    return emails
 
 def limit_repos(repos: List[Dict], max_repos: int = 10) -> List[Dict]:
     """Limit the number of repositories to scan based on user input (called once)"""
@@ -153,8 +144,8 @@ def limit_repos(repos: List[Dict], max_repos: int = 10) -> List[Dict]:
     logger.warning("Invalid choice. Using first 10 repos.")
     return repos[:max_repos]
 
-def process_target(org: Optional[str], user: Optional[str]) -> Dict[str, List[Dict]]:
-    """Process organization or user to extract commit details"""
+def process_target(org: Optional[str], user: Optional[str]) -> Dict[str, List[str]]:
+    """Process organization or user to extract emails"""
     results = {}
     targets = []
     limited_repos = {}
@@ -179,7 +170,7 @@ def process_target(org: Optional[str], user: Optional[str]) -> Dict[str, List[Di
 
     for target in targets:
         logger.info(f"Processing: {target}")
-        commits_details = []
+        emails = set()
         repos = limited_repos.get(target, [])
 
         if not repos:
@@ -187,44 +178,25 @@ def process_target(org: Optional[str], user: Optional[str]) -> Dict[str, List[Di
             continue
 
         for repo in repos:
-            commits = extract_commits_from_repo(target, repo['name'])
-            if commits:
-                logger.info(f"Found {len(commits)} commit(s) in {repo['name']}")
-                commits_details.append({
-                    'repo': repo['name'],
-                    'commits': commits
-                })
+            repo_emails = extract_emails_from_repo(target, repo['name'])
+            if repo_emails:
+                logger.info(f"Found {len(repo_emails)} email(s) in {repo['name']}")
+                emails.update(repo_emails)
 
-        if commits_details:
-            results[target] = commits_details
+        if emails:
+            results[target] = sorted(emails)
 
     return results
 
-def display_results(results: Dict[str, List[Dict]], logging_choice: str) -> None:
+def display_results(results: Dict[str, List[str]]) -> None:
     """Display results in a formatted table"""
     if not results:
-        logger.warning("No commits found")
+        logger.warning("No emails found")
         return
 
-    data = []
-    for username, repos in results.items():
-        for repo in repos:
-            repo_name = repo['repo']
-            if logging_choice == 'S':  # Simple output (only emails)
-                for commit in repo['commits']:
-                    data.append({
-                        'Username': username,
-                        'Email': commit['email']
-                    })
-            else:  # Detailed output
-                for commit in repo['commits']:
-                    data.append({
-                        'Username': username,
-                        'Repository': repo_name,
-                        'Commit Author': commit['author'],
-                        'Email': commit['email'],
-                        'Commit Message': commit['message']
-                    })
+    data = [{'Username': username, 'Email': email}
+            for username, emails in results.items()
+            for email in emails]
 
     print(f"\n{TextColor.BOLD}Results:{TextColor.END}")
     print(pd.DataFrame(data).to_string(index=False))
@@ -232,8 +204,8 @@ def display_results(results: Dict[str, List[Dict]], logging_choice: str) -> None
 def main():
     """Main program execution"""
     display_logo()
-    org, user, logging_choice = get_user_input()
-    display_results(process_target(org, user), logging_choice)
+    org, user = get_user_input()
+    display_results(process_target(org, user))
 
 if __name__ == "__main__":
     main()
